@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Send, X, Bot, User } from "lucide-react";
+import { Send, X, Bot, User, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -19,17 +21,12 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content: "Hello! I'm your Aura assistant. I'm here to help you understand your health patterns and provide personalized insights. What would you like to know about your wellness journey?",
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -37,31 +34,122 @@ export function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
     }
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+  useEffect(() => {
+    if (isOpen) {
+      loadConversationHistory();
+    }
+  }, [isOpen]);
 
-    const newMessage: Message = {
+  const loadConversationHistory = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: conversations, error } = await supabase
+        .from('ai_conversations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(20);
+
+      if (error) throw error;
+
+      const formattedMessages: Message[] = conversations?.map(conv => ({
+        id: conv.id,
+        content: conv.message,
+        isUser: conv.message_type === 'user',
+        timestamp: new Date(conv.created_at),
+      })) || [];
+
+      if (formattedMessages.length === 0) {
+        // Add welcome message if no conversation history
+        formattedMessages.push({
+          id: 'welcome',
+          content: "Hello! I'm your Aura assistant. I'm here to help you understand your health patterns and provide personalized insights based on your wellness data. What would you like to know about your health journey?",
+          isUser: false,
+          timestamp: new Date(),
+        });
+      }
+
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error loading conversation history:', error);
+      // Add fallback welcome message
+      setMessages([{
+        id: 'welcome',
+        content: "Hello! I'm your Aura assistant. I'm here to help you understand your health patterns. What would you like to know?",
+        isUser: false,
+        timestamp: new Date(),
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isTyping) return;
+
+    const userMessage: Message = {
       id: Date.now().toString(),
       content: inputValue,
       isUser: true,
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('aura-chat', {
+        body: {
+          message: inputValue,
+          userId: user.id
+        }
+      });
+
+      if (error) throw error;
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I understand you're interested in your health patterns. Based on your recent data, I'd recommend focusing on your sleep consistency. Would you like me to analyze your recent sleep trends and provide specific recommendations?",
+        content: data.response || data.fallbackResponse || "I'm sorry, I'm having trouble right now. Please try again.",
         isUser: false,
         timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, aiResponse]);
+
+      if (data.fallbackResponse) {
+        toast({
+          title: "Limited functionality",
+          description: "I'm having trouble accessing your health data. Try syncing your device.",
+          variant: "destructive",
+        });
+      }
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      
+      const errorResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I'm having trouble connecting right now. Please check your internet connection and try again.",
+        isUser: false,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorResponse]);
+      
+      toast({
+        title: "Connection error",
+        description: "Unable to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -92,56 +180,63 @@ export function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
         </div>
 
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-3 max-w-[80%]",
-                  message.isUser ? "ml-auto flex-row-reverse" : ""
-                )}
-              >
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-2 text-sm text-muted-foreground">Loading conversation...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {messages.map((message) => (
                 <div
+                  key={message.id}
                   className={cn(
-                    "w-7 h-7 rounded-full flex items-center justify-center shrink-0",
-                    message.isUser
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-gradient-primary"
+                    "flex gap-3 max-w-[80%]",
+                    message.isUser ? "ml-auto flex-row-reverse" : ""
                   )}
                 >
-                  {message.isUser ? (
-                    <User className="h-3 w-3" />
-                  ) : (
-                    <Bot className="h-3 w-3 text-white" />
-                  )}
-                </div>
-                <div
-                  className={cn(
-                    "rounded-2xl px-4 py-2 text-sm",
-                    message.isUser
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted border border-border/50"
-                  )}
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="flex gap-3 max-w-[80%]">
-                <div className="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center shrink-0">
-                  <Bot className="h-3 w-3 text-white" />
-                </div>
-                <div className="bg-muted border border-border/50 rounded-2xl px-4 py-2 text-sm">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.1s]" />
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
+                  <div
+                    className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center shrink-0",
+                      message.isUser
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-gradient-primary"
+                    )}
+                  >
+                    {message.isUser ? (
+                      <User className="h-3 w-3" />
+                    ) : (
+                      <Bot className="h-3 w-3 text-white" />
+                    )}
+                  </div>
+                  <div
+                    className={cn(
+                      "rounded-2xl px-4 py-2 text-sm",
+                      message.isUser
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted border border-border/50"
+                    )}
+                  >
+                    {message.content}
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              ))}
+              {isTyping && (
+                <div className="flex gap-3 max-w-[80%]">
+                  <div className="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center shrink-0">
+                    <Bot className="h-3 w-3 text-white" />
+                  </div>
+                  <div className="bg-muted border border-border/50 rounded-2xl px-4 py-2 text-sm">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.1s]" />
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </ScrollArea>
 
         <div className="p-4 border-t border-border/50">

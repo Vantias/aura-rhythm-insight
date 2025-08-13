@@ -6,6 +6,7 @@ import { InsightCard } from "@/components/dashboard/insight-card";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { ContextLogger } from "@/components/context/context-logger";
 import { DeviceConnectionCard } from "@/components/ui/device-connection-card";
+import { InsightsGenerator } from "@/components/ui/insights-generator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,11 @@ const Index = () => {
   const healthData = useHealthData(user);
   const deviceConnection = useDeviceConnection(user);
   const insights = useInsights(user);
+  
+  const handleInsightsGenerated = () => {
+    // Trigger a refresh of insights data
+    window.location.reload();
+  };
 
   useEffect(() => {
     // Get initial session
@@ -173,6 +179,11 @@ const Index = () => {
               </div>
             )}
           </div>
+        </section>
+
+        {/* AI Insights Generator */}
+        <section>
+          <InsightsGenerator onInsightsGenerated={handleInsightsGenerated} />
         </section>
 
         {/* Device Connection */}
