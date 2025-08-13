@@ -8,89 +8,91 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Aura Dark Health Theme */
+    --background: 220 27% 8%;
+    --foreground: 210 20% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 27% 10%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 27% 12%;
+    --popover-foreground: 210 20% 95%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 258 100% 70%; /* Vibrant purple for health tech */
+    --primary-foreground: 220 27% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 27% 16%;
+    --secondary-foreground: 210 20% 95%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 27% 14%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 258 100% 70%;
+    --accent-foreground: 220 27% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --success: 142 76% 36%; /* Health green */
+    --success-foreground: 210 20% 95%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --warning: 38 92% 50%; /* Warning orange */
+    --warning-foreground: 220 27% 8%;
 
-    --radius: 0.5rem;
+    --destructive: 348 83% 47%;
+    --destructive-foreground: 210 20% 95%;
 
-    --sidebar-background: 0 0% 98%;
+    --border: 220 27% 18%;
+    --input: 220 27% 16%;
+    --ring: 258 100% 70%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --radius: 0.75rem;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Health-specific colors */
+    --health-excellent: 142 76% 36%;
+    --health-good: 142 76% 50%;
+    --health-normal: 258 100% 70%;
+    --health-attention: 38 92% 50%;
+    --health-concern: 348 83% 47%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(258 100% 70%), hsl(242 91% 69%));
+    --gradient-health: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 50%));
+    --gradient-card: linear-gradient(135deg, hsl(220 27% 10%), hsl(220 27% 12%));
+    --gradient-glow: radial-gradient(circle at center, hsl(258 100% 70% / 0.15), transparent 70%);
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    /* Shadows & Effects */
+    --shadow-health: 0 4px 20px hsl(258 100% 70% / 0.15);
+    --shadow-card: 0 4px 12px hsl(220 27% 4% / 0.4);
+    --shadow-glow: 0 0 30px hsl(258 100% 70% / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Typography */
+    --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Force dark theme always for Aura */
+    --background: 220 27% 8%;
+    --foreground: 210 20% 95%;
+    --card: 220 27% 10%;
+    --card-foreground: 210 20% 95%;
+    --popover: 220 27% 12%;
+    --popover-foreground: 210 20% 95%;
+    --primary: 258 100% 70%;
+    --primary-foreground: 220 27% 8%;
+    --secondary: 220 27% 16%;
+    --secondary-foreground: 210 20% 95%;
+    --muted: 220 27% 14%;
+    --muted-foreground: 220 10% 60%;
+    --accent: 258 100% 70%;
+    --accent-foreground: 220 27% 8%;
+    --destructive: 348 83% 47%;
+    --destructive-foreground: 210 20% 95%;
+    --border: 220 27% 18%;
+    --input: 220 27% 16%;
+    --ring: 258 100% 70%;
   }
 }
 
@@ -100,6 +102,61 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    font-variation-settings: 'opsz' 32;
+  }
+
+  /* Force dark theme for health app */
+  html {
+    color-scheme: dark;
+  }
+
+  /* Health status indicators */
+  .health-status-excellent {
+    @apply bg-health-excellent/10 text-health-excellent border-health-excellent/20;
+  }
+  
+  .health-status-good {
+    @apply bg-health-good/10 text-health-good border-health-good/20;
+  }
+  
+  .health-status-normal {
+    @apply bg-primary/10 text-primary border-primary/20;
+  }
+  
+  .health-status-attention {
+    @apply bg-warning/10 text-warning border-warning/20;
+  }
+  
+  .health-status-concern {
+    @apply bg-destructive/10 text-destructive border-destructive/20;
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .glow-health {
+    box-shadow: 0 0 30px hsl(var(--health-excellent) / 0.3);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 3px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.8);
   }
 }
