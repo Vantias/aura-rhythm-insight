@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ContextTag {
   id: string;
@@ -61,15 +62,44 @@ export function ContextLogger({ isOpen, onClose }: ContextLoggerProps) {
     setSelectedTags(newSelected);
   };
 
-  const handleSave = () => {
-    // Here you would save to Supabase
-    console.log("Saving context tags:", Array.from(selectedTags));
-    toast({
-      title: "Context logged successfully",
-      description: `${selectedTags.size} tags saved for today`,
-    });
-    setSelectedTags(new Set());
-    onClose();
+  const handleSave = async () => {
+    if (selectedTags.size === 0) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const contextData = {
+        user_id: user.id,
+        action_type: "context_log",
+        data: {
+          tags: Array.from(selectedTags),
+          date: new Date().toISOString().split('T')[0],
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      const { error } = await supabase
+        .from("quick_actions_log")
+        .insert(contextData);
+
+      if (error) throw error;
+
+      toast({
+        title: "Context logged successfully",
+        description: `${selectedTags.size} tags saved for today`,
+      });
+      
+      setSelectedTags(new Set());
+      onClose();
+    } catch (error) {
+      console.error("Error saving context:", error);
+      toast({
+        title: "Failed to save context",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
   };
 
   const categorizedTags = contextTags.reduce((acc, tag) => {
