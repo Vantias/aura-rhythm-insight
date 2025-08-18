@@ -16,6 +16,7 @@ interface DeviceConnectionState {
   error: string | null;
   syncHealthData: () => Promise<void>;
   connectDevice: (deviceType: string, deviceName: string) => Promise<void>;
+  disconnectDevice: (deviceId: string) => Promise<void>;
 }
 
 export function useDeviceConnection(user: User | null): DeviceConnectionState {
@@ -97,6 +98,26 @@ export function useDeviceConnection(user: User | null): DeviceConnectionState {
     } catch (err) {
       console.error("Error connecting device:", err);
       setError(err instanceof Error ? err.message : "Failed to connect device");
+    }
+  };
+
+  const disconnectDevice = async (deviceId: string) => {
+    if (!user) return;
+
+    try {
+      setError(null);
+      
+      const { error } = await supabase
+        .from("device_connections")
+        .update({ is_connected: false })
+        .eq("id", deviceId);
+
+      if (error) throw error;
+
+      await fetchDevices();
+    } catch (err) {
+      console.error("Error disconnecting device:", err);
+      setError(err instanceof Error ? err.message : "Failed to disconnect device");
     }
   };
 
@@ -186,6 +207,7 @@ export function useDeviceConnection(user: User | null): DeviceConnectionState {
     isLoading,
     error,
     syncHealthData,
-    connectDevice
+    connectDevice,
+    disconnectDevice
   };
 }

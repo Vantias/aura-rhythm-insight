@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Watch, Smartphone, Wifi, WifiOff, RefreshCw } from "lucide-react";
+import { Watch, Smartphone, Wifi, WifiOff, RefreshCw, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { DeviceSelectionDialog } from "./device-selection-dialog";
 
 interface DeviceConnectionCardProps {
   devices: Array<{
@@ -15,6 +16,7 @@ interface DeviceConnectionCardProps {
     last_sync: string | null;
   }>;
   onConnect: (deviceType: string, deviceName: string) => Promise<void>;
+  onDisconnect: (deviceId: string) => Promise<void>;
   onSync: () => Promise<void>;
   isLoading: boolean;
 }
@@ -22,9 +24,11 @@ interface DeviceConnectionCardProps {
 export function DeviceConnectionCard({ 
   devices, 
   onConnect, 
+  onDisconnect,
   onSync, 
   isLoading 
 }: DeviceConnectionCardProps) {
+  const [isDeviceDialogOpen, setIsDeviceDialogOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
@@ -45,26 +49,14 @@ export function DeviceConnectionCard({
     }
   };
 
-  const handleConnect = async () => {
+  const handleConnect = async (deviceType: string, deviceName: string) => {
     setIsConnecting(true);
     try {
-      // Enhanced device detection with multiple device support
-      const availableDevices = [
-        { type: 'apple_watch', name: 'Apple Watch Series 9' },
-        { type: 'samsung_watch', name: 'Samsung Galaxy Watch 6' },
-        { type: 'fitbit', name: 'Fitbit Sense 2' },
-        { type: 'garmin', name: 'Garmin Venu 3' },
-        { type: 'polar', name: 'Polar Vantage V3' }
-      ];
-      
-      // Simulate device detection (in real app, this would scan for nearby devices)
-      const detectedDevice = availableDevices[Math.floor(Math.random() * availableDevices.length)];
-      
-      await onConnect(detectedDevice.type, detectedDevice.name);
+      await onConnect(deviceType, deviceName);
       
       toast({
         title: "Device connected successfully",
-        description: `${detectedDevice.name} is now syncing your health data`,
+        description: `${deviceName} is now syncing your health data`,
       });
     } catch (error) {
       toast({
@@ -74,6 +66,22 @@ export function DeviceConnectionCard({
       });
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async (deviceId: string) => {
+    try {
+      await onDisconnect(deviceId);
+      toast({
+        title: "Device disconnected",
+        description: "Device has been successfully disconnected",
+      });
+    } catch (error) {
+      toast({
+        title: "Disconnection failed",
+        description: "Unable to disconnect device. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -145,27 +153,50 @@ export function DeviceConnectionCard({
                     )}
                     {device.is_connected ? "Connected" : "Disconnected"}
                   </Badge>
+                  
+                  {device.is_connected && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDisconnect(device.id)}
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
             
-            <Button
-              onClick={handleSync}
-              disabled={isSyncing || isLoading}
-              className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
-            >
-              {isSyncing ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Sync Health Data
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSync}
+                disabled={isSyncing || isLoading}
+                className="flex-1 bg-gradient-primary hover:opacity-90 transition-opacity"
+              >
+                {isSyncing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Sync Data
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => setIsDeviceDialogOpen(true)}
+                variant="outline"
+                disabled={isLoading}
+                className="shrink-0"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Device
+              </Button>
+            </div>
           </>
         ) : (
           <div className="text-center space-y-4">
@@ -177,28 +208,26 @@ export function DeviceConnectionCard({
                 No devices connected
               </p>
               <p className="text-xs text-muted-foreground">
-                Connect your smartwatch, fitness tracker, or health device to start monitoring. Supports Apple Watch, Samsung Galaxy Watch, Fitbit, Garmin, Polar, and more.
+                Connect a health device to start monitoring your wellness data. Choose from smartwatches, fitness trackers, or use manual entry.
               </p>
             </div>
             <Button
-              onClick={handleConnect}
-              disabled={isConnecting || isLoading}
+              onClick={() => setIsDeviceDialogOpen(true)}
+              disabled={isLoading}
               className="bg-gradient-primary hover:opacity-90 transition-opacity"
             >
-              {isConnecting ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <Wifi className="h-4 w-4 mr-2" />
-                  Connect Device
-                </>
-              )}
+              <Plus className="h-4 w-4 mr-2" />
+              Connect Device
             </Button>
           </div>
         )}
+        
+        <DeviceSelectionDialog
+          open={isDeviceDialogOpen}
+          onOpenChange={setIsDeviceDialogOpen}
+          onConnect={handleConnect}
+          isConnecting={isConnecting}
+        />
       </CardContent>
     </Card>
   );

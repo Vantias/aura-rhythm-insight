@@ -191,6 +191,7 @@ const Index = () => {
           <DeviceConnectionCard
             devices={deviceConnection.devices}
             onConnect={deviceConnection.connectDevice}
+            onDisconnect={deviceConnection.disconnectDevice}
             onSync={deviceConnection.syncHealthData}
             isLoading={deviceConnection.isLoading}
           />
