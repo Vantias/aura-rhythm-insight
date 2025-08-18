@@ -108,39 +108,51 @@ export function useDeviceConnection(user: User | null): DeviceConnectionState {
       
       // Check for HealthKit/Health Connect availability
       if ('HealthKit' in window || 'navigator' in window && 'health' in navigator) {
-        // Simulate health data sync from device
+        // Enhanced device simulation with more realistic health data generation
+        const now = new Date();
+        const timeOfDay = now.getHours();
+        
+        // Generate more realistic values based on time of day and individual variation
         const mockHealthData = [
           {
             user_id: user.id,
             metric_type: 'heart_rate',
-            value: Math.floor(Math.random() * 20) + 60, // 60-80 bpm
+            value: Math.floor(Math.random() * 15) + (timeOfDay < 6 || timeOfDay > 22 ? 55 : 65), // Lower at night
             unit: 'bpm',
-            source: 'apple_watch',
-            recorded_at: new Date().toISOString()
+            source: 'wearable_device',
+            recorded_at: now.toISOString()
           },
           {
             user_id: user.id,
             metric_type: 'hrv',
-            value: Math.floor(Math.random() * 30) + 30, // 30-60 ms
+            value: Math.floor(Math.random() * 25) + (timeOfDay < 8 ? 45 : 35), // Higher in morning
             unit: 'ms',
-            source: 'apple_watch',
-            recorded_at: new Date().toISOString()
+            source: 'wearable_device',
+            recorded_at: now.toISOString()
           },
           {
             user_id: user.id,
             metric_type: 'sleep_duration',
-            value: Number((Math.random() * 2 + 6.5).toFixed(1)), // 6.5-8.5 hours
+            value: Number((Math.random() * 2.5 + 6.5).toFixed(1)), // 6.5-9 hours
             unit: 'hours',
-            source: 'apple_watch',
-            recorded_at: new Date().toISOString()
+            source: 'wearable_device',
+            recorded_at: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString() // 8 hours ago
           },
           {
             user_id: user.id,
             metric_type: 'stress_level',
-            value: Math.floor(Math.random() * 60) + 20, // 20-80 stress score
+            value: Math.floor(Math.random() * 40) + (timeOfDay >= 9 && timeOfDay <= 17 ? 30 : 20), // Higher during work hours
             unit: 'score',
-            source: 'apple_watch',
-            recorded_at: new Date().toISOString()
+            source: 'wearable_device',
+            recorded_at: now.toISOString()
+          },
+          {
+            user_id: user.id,
+            metric_type: 'steps',
+            value: Math.floor(Math.random() * 5000) + 3000, // 3000-8000 steps
+            unit: 'count',
+            source: 'wearable_device',
+            recorded_at: now.toISOString()
           }
         ];
 
