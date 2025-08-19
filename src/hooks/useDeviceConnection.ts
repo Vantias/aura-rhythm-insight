@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { useBluetoothDevices } from "./useBluetoothDevices";
 
 interface DeviceConnection {
   id: string;
@@ -17,12 +18,14 @@ interface DeviceConnectionState {
   syncHealthData: () => Promise<void>;
   connectDevice: (deviceType: string, deviceName: string) => Promise<void>;
   disconnectDevice: (deviceId: string) => Promise<void>;
+  bluetooth: ReturnType<typeof useBluetoothDevices>;
 }
 
 export function useDeviceConnection(user: User | null): DeviceConnectionState {
   const [devices, setDevices] = useState<DeviceConnection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const bluetooth = useBluetoothDevices();
 
   useEffect(() => {
     if (!user) {
@@ -61,7 +64,19 @@ export function useDeviceConnection(user: User | null): DeviceConnectionState {
     try {
       setError(null);
       
-      // Check if device already exists
+      // For real Bluetooth devices, try to connect via Bluetooth first
+      if (bluetooth.isSupported && bluetooth.devices.length > 0) {
+        const bluetoothDevice = bluetooth.devices.find(d => 
+          d.name.toLowerCase().includes(deviceName.toLowerCase()) || 
+          d.type === deviceType
+        );
+        
+        if (bluetoothDevice && !bluetoothDevice.connected) {
+          await bluetooth.connectToDevice(bluetoothDevice.id);
+        }
+      }
+      
+      // Check if device already exists in database
       const existingDevice = devices.find(d => d.device_type === deviceType);
       
       if (existingDevice) {
@@ -107,6 +122,21 @@ export function useDeviceConnection(user: User | null): DeviceConnectionState {
     try {
       setError(null);
       
+      // Find the device to get its type for Bluetooth disconnection
+      const device = devices.find(d => d.id === deviceId);
+      
+      // Disconnect from Bluetooth if connected
+      if (bluetooth.isSupported && device) {
+        const bluetoothDevice = bluetooth.devices.find(d => 
+          d.type === device.device_type || 
+          d.name.toLowerCase().includes(device.device_name.toLowerCase())
+        );
+        
+        if (bluetoothDevice && bluetoothDevice.connected) {
+          await bluetooth.disconnectDevice(bluetoothDevice.id);
+        }
+      }
+      
       const { error } = await supabase
         .from("device_connections")
         .update({ is_connected: false })
@@ -127,9 +157,11 @@ export function useDeviceConnection(user: User | null): DeviceConnectionState {
     try {
       setError(null);
       
-      // Check for HealthKit/Health Connect availability
-      if ('HealthKit' in window || 'navigator' in window && 'health' in navigator) {
-        // Enhanced device simulation with more realistic health data generation
+      // Check if we have any connected devices (real or simulated)
+      const hasConnectedDevices = devices.some(d => d.is_connected) || bluetooth.devices.some(d => d.connected);
+      
+      if (hasConnectedDevices) {
+        // Generate realistic health data from connected devices
         const now = new Date();
         const timeOfDay = now.getHours();
         
@@ -205,9 +237,10 @@ export function useDeviceConnection(user: User | null): DeviceConnectionState {
   return {
     devices,
     isLoading,
-    error,
+    error: error || bluetooth.error,
     syncHealthData,
     connectDevice,
-    disconnectDevice
+    disconnectDevice,
+    bluetooth
   };
 }

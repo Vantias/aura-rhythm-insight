@@ -208,7 +208,7 @@ export function DeviceConnectionCard({
                 No devices connected
               </p>
               <p className="text-xs text-muted-foreground">
-                Connect a health device to start monitoring your wellness data. Choose from smartwatches, fitness trackers, or use manual entry.
+                Connect a health device to start monitoring your wellness data. Scan for nearby Bluetooth devices or choose from supported options.
               </p>
             </div>
             <Button

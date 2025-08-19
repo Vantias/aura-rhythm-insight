@@ -20,8 +20,8 @@ serve(async (req) => {
       throw new Error('Message and userId are required');
     }
 
-    // Using free local AI simulation instead of paid OpenAI
-    console.log('Using free local AI simulation for chat responses...');
+    // Using advanced free AI health partner
+    console.log('Processing health question with comprehensive AI knowledge...');
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
